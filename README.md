@@ -1,3 +1,15 @@
+Adds Camera Relative Movement options to Xinput controllers to move in the direction the left stick points, relative to the camera, instead of tank controls, has two options:
+
+Chase camera: The camera follows the character. Lean the left stick to steer, push it down to walk backwards.
+Detached camera: The right stick orbits the camera, which stays put when the character turns. The left stick moves the character in every direction.
+
+Why? I dont know, i could never get used to re4 controls and this is alot more confortable for me. sorry
+This has been made with ai kinda just to see if it was posible, there are likely bugs.
+
+I dont know why you would but, the changes here can be used without permision.
+
+Following below the original readme just in case
+---------------------------------------------------------------------------------------------------------------------------------------
 ![re4_tweaks](https://raw.githubusercontent.com/nipkownix/nipkownix.github.io/master/assets/img/RE4T/re4_t.svg) 
 
 ### Description
