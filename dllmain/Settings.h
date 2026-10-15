@@ -10,6 +10,12 @@ enum MouseTurnTypes
 	TypeB
 };
 
+enum CameraRelativeModes
+{
+	CamRel_Chase,
+	CamRel_Detached
+};
+
 class re4t_cfg
 {
 public:
@@ -101,6 +107,11 @@ public:
 	bool bAllowReloadWithoutAiming_controller = false;
 	bool bReloadWithoutZoom_controller = false;
 	bool bSmoothAnalogTurning = false;
+	bool bCameraRelativeMovement = false;
+	int iCameraRelativeMode = CameraRelativeModes::CamRel_Chase;
+	float fCameraRelativeTurnGain = 0.10f;
+	float fCameraRelativeMaxTurnRate = 0.20f;
+	float fCameraRelativeOrbitSpeed = 0.07f;
 
 	// FRAME RATE
 	bool bMotionFixes = true;

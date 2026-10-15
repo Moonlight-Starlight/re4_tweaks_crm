@@ -1220,6 +1220,69 @@ void cfgMenuRender()
 						ImGui::TextWrapped("Use analog directional input to turn when moving forwards and backwards, similar to Resident Evil 5's type A/B controls.");
 					}
 
+					// CameraRelativeMovement
+					if ((OptionsFilter.PassFilter("CameraRelativeMovement") && OptionsFilter.IsActive()) || !OptionsFilter.IsActive())
+					{
+						ImGui_ColumnSwitch();
+
+						re4t::cfg->HasUnsavedChanges |= ImGui::Checkbox("CameraRelativeMovement", &re4t::cfg->bCameraRelativeMovement);
+
+						ImGui_ItemSeparator();
+
+						ImGui::Dummy(ImVec2(10, 10 * esHook._cur_monitor_dpi));
+						ImGui::TextWrapped("Move the character in the direction the left analog stick is pushed, relative to the camera, instead of the original tank controls.");
+						ImGui::TextWrapped("Experimental. Only affects gamepads using XInput. Aiming and the knife keep the game's own controls.");
+
+						ImGui::Dummy(ImVec2(10, 10 * esHook._cur_monitor_dpi));
+
+						ImGui::BeginDisabled(!re4t::cfg->bCameraRelativeMovement);
+
+						if (ImGui::RadioButton("Chase camera", &re4t::cfg->iCameraRelativeMode, CameraRelativeModes::CamRel_Chase))
+							re4t::cfg->HasUnsavedChanges = true;
+						ImGui::Indent(29.0);
+						ImGui::TextWrapped("The camera follows the character, as in the original game. Tilt the stick a little to one side to steer, and the camera comes round with you. Put the stick back to forward to walk straight.");
+						ImGui::Unindent(29.0);
+
+						ImGui::Dummy(ImVec2(10, 10 * esHook._cur_monitor_dpi));
+
+						if (ImGui::RadioButton("Detached camera", &re4t::cfg->iCameraRelativeMode, CameraRelativeModes::CamRel_Detached))
+							re4t::cfg->HasUnsavedChanges = true;
+						ImGui::Indent(29.0);
+						ImGui::TextWrapped("The right stick orbits the camera, and the camera stays where it is when the character turns, like most modern third-person games. The character turns to face the camera when you aim. Only applies to the normal over-the-shoulder camera.");
+						ImGui::Unindent(29.0);
+
+						ImGui::Dummy(ImVec2(10, 10 * esHook._cur_monitor_dpi));
+
+						ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Steering response").x - 60);
+						ImGui::SliderFloat("Steering response", &re4t::cfg->fCameraRelativeTurnGain, 0.06f, 0.16f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+						ImGui::PopItemWidth();
+						if (ImGui::IsItemEdited())
+							re4t::cfg->HasUnsavedChanges = true;
+						ImGui::TextWrapped("How quickly the character turns toward the stick direction. Higher is snappier. (Default: 0.10)");
+
+						ImGui::Dummy(ImVec2(10, 10 * esHook._cur_monitor_dpi));
+
+						ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Maximum turn speed").x - 60);
+						ImGui::SliderFloat("Maximum turn speed", &re4t::cfg->fCameraRelativeMaxTurnRate, 0.14f, 0.28f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+						ImGui::PopItemWidth();
+						if (ImGui::IsItemEdited())
+							re4t::cfg->HasUnsavedChanges = true;
+						ImGui::TextWrapped("Limits how fast the character can turn. (Default: 0.20)");
+
+						ImGui::BeginDisabled(re4t::cfg->iCameraRelativeMode != CameraRelativeModes::CamRel_Detached);
+						ImGui::Dummy(ImVec2(10, 10 * esHook._cur_monitor_dpi));
+
+						ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Camera orbit speed").x - 60);
+						ImGui::SliderFloat("Camera orbit speed", &re4t::cfg->fCameraRelativeOrbitSpeed, 0.045f, 0.10f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+						ImGui::PopItemWidth();
+						if (ImGui::IsItemEdited())
+							re4t::cfg->HasUnsavedChanges = true;
+						ImGui::TextWrapped("How fast the right stick turns the camera in Detached mode. (Default: 0.070)");
+						ImGui::EndDisabled();
+
+						ImGui::EndDisabled();
+					}
+
 					// AllowReloadWithoutAiming_controller
 					if ((OptionsFilter.PassFilter("AllowReloadWithoutAiming") && OptionsFilter.IsActive()) || !OptionsFilter.IsActive())
 					{

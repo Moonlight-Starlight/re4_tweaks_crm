@@ -17,6 +17,10 @@ float* fAnalogRX;
 float* fAnalogRY;
 
 int RawAnalogLX;
+int RawAnalogLY;
+
+// CameraRelativeMovement.cpp
+void CameraRelativeMovement_ProcessStick(uintptr_t pad);
 
 void re4t::init::ControllerTweaks()
 {
@@ -70,8 +74,13 @@ void re4t::init::ControllerTweaks()
 		{
 			void operator()(injector::reg_pack& regs)
 			{
+				// CameraRelativeMovement may rewrite the left stick words here, before the game reads them for its deadzone/KEY_* handling.
+				// RawAnalogLX/LY are captured afterwards so SmoothAnalogTurning sees the same (synthetic) values as the game.
+				if (re4t::cfg->bCameraRelativeMovement)
+					CameraRelativeMovement_ProcessStick(regs.esi);
+
 				RawAnalogLX = *(int16_t*)(regs.esi - 0x44);
-				//RawAnalogLY = *(int16_t*)(regs.esi - 0x42);
+				RawAnalogLY = *(int16_t*)(regs.esi - 0x42);
 				//RawAnalogRX = *(int16_t*)(regs.esi - 0x40);
 				//RawAnalogRY = *(int16_t*)(regs.esi - 0x3E);
 				// Code we overwrote
@@ -136,6 +145,9 @@ void re4t::init::ControllerTweaks()
 		}; injector::MakeInline<LastUsedDeviceHook>(pattern_begin.count(1).get(0).get<uint32_t>(2), pattern_end.count(1).get(0).get<uint32_t>(0));
 
 		spd::log()->info("{} -> XInput deadzone changes applied", __FUNCTION__);
+
+		if (re4t::cfg->bCameraRelativeMovement)
+			spd::log()->info("{} -> CameraRelativeMovement enabled", __FUNCTION__);
 	}
 
 	// Smooth analog turning, similar to RE5's type A/B controls
