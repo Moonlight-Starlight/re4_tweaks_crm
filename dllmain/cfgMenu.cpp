@@ -1220,6 +1220,87 @@ void cfgMenuRender()
 						ImGui::TextWrapped("Use analog directional input to turn when moving forwards and backwards, similar to Resident Evil 5's type A/B controls.");
 					}
 
+					// CameraRelativeMovement
+					if ((OptionsFilter.PassFilter("CameraRelativeMovement") && OptionsFilter.IsActive()) || !OptionsFilter.IsActive())
+					{
+						ImGui_ColumnSwitch();
+
+						re4t::cfg->HasUnsavedChanges |= ImGui::Checkbox("CameraRelativeMovement", &re4t::cfg->bCameraRelativeMovement);
+
+						ImGui_ItemSeparator();
+
+						ImGui::Dummy(ImVec2(10, 10 * esHook._cur_monitor_dpi));
+						ImGui::TextWrapped("Move in the direction the left stick points, relative to the camera, instead of tank controls.");
+						ImGui::TextWrapped("Experimental. Xinput only. Aiming keeps the original controls.");
+
+						ImGui::Dummy(ImVec2(10, 10 * esHook._cur_monitor_dpi));
+
+						ImGui::BeginDisabled(!re4t::cfg->bCameraRelativeMovement);
+
+						if (ImGui::RadioButton("Chase camera", &re4t::cfg->iCameraRelativeMode, CameraRelativeModes::CamRel_Chase))
+							re4t::cfg->HasUnsavedChanges = true;
+						ImGui::Indent(29.0);
+						ImGui::TextWrapped("The camera follows the character, as in the original. Lean the stick to steer, push down to walk backwards.");
+						ImGui::Unindent(29.0);
+
+						ImGui::Dummy(ImVec2(10, 10 * esHook._cur_monitor_dpi));
+
+						if (ImGui::RadioButton("Detached camera", &re4t::cfg->iCameraRelativeMode, CameraRelativeModes::CamRel_Detached))
+							re4t::cfg->HasUnsavedChanges = true;
+						ImGui::Indent(29.0);
+						ImGui::TextWrapped("The right stick orbits the camera, which stays put when the character turns. The left stick moves the character in every direction.");
+						ImGui::Unindent(29.0);
+
+						ImGui::Dummy(ImVec2(10, 10 * esHook._cur_monitor_dpi));
+
+						ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Steering response").x - 60);
+						ImGui::SliderFloat("Steering response", &re4t::cfg->fCameraRelativeTurnGain, 0.06f, 0.16f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+						ImGui::PopItemWidth();
+						if (ImGui::IsItemEdited())
+							re4t::cfg->HasUnsavedChanges = true;
+						ImGui::TextWrapped("How fast the character turns toward the stick. (Default: 0.10)");
+
+						ImGui::Dummy(ImVec2(10, 10 * esHook._cur_monitor_dpi));
+
+						ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Maximum turn speed").x - 60);
+						ImGui::SliderFloat("Maximum turn speed", &re4t::cfg->fCameraRelativeMaxTurnRate, 0.14f, 0.28f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+						ImGui::PopItemWidth();
+						if (ImGui::IsItemEdited())
+							re4t::cfg->HasUnsavedChanges = true;
+						ImGui::TextWrapped("Limit on the turning speed. (Default: 0.20)");
+
+						ImGui::Dummy(ImVec2(10, 10 * esHook._cur_monitor_dpi));
+
+						ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Left drift zone").x - 60);
+						ImGui::SliderFloat("Left drift zone", &re4t::cfg->fCameraRelativeDriftLeft, 0.0f, 0.20f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+						ImGui::PopItemWidth();
+						if (ImGui::IsItemEdited())
+							re4t::cfg->HasUnsavedChanges = true;
+						ImGui::TextWrapped("Ignores a small lean of the stick to the left, to hide stick drift. (Default: 0.08)");
+
+						ImGui::Dummy(ImVec2(10, 10 * esHook._cur_monitor_dpi));
+
+						ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Right drift zone").x - 60);
+						ImGui::SliderFloat("Right drift zone", &re4t::cfg->fCameraRelativeDriftRight, 0.0f, 0.20f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+						ImGui::PopItemWidth();
+						if (ImGui::IsItemEdited())
+							re4t::cfg->HasUnsavedChanges = true;
+						ImGui::TextWrapped("Ignores a small lean of the stick to the right, to hide stick drift. (Default: 0.08)");
+
+						ImGui::BeginDisabled(re4t::cfg->iCameraRelativeMode != CameraRelativeModes::CamRel_Detached);
+						ImGui::Dummy(ImVec2(10, 10 * esHook._cur_monitor_dpi));
+
+						ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Camera orbit speed").x - 60);
+						ImGui::SliderFloat("Camera orbit speed", &re4t::cfg->fCameraRelativeOrbitSpeed, 0.045f, 0.10f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+						ImGui::PopItemWidth();
+						if (ImGui::IsItemEdited())
+							re4t::cfg->HasUnsavedChanges = true;
+						ImGui::TextWrapped("Detached camera only. How fast the right stick turns the camera. (Default: 0.070)");
+						ImGui::EndDisabled();
+
+						ImGui::EndDisabled();
+					}
+
 					// AllowReloadWithoutAiming_controller
 					if ((OptionsFilter.PassFilter("AllowReloadWithoutAiming") && OptionsFilter.IsActive()) || !OptionsFilter.IsActive())
 					{

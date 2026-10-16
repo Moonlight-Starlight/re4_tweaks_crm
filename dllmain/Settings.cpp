@@ -232,6 +232,27 @@ void ReadSettingsIni(std::wstring ini_path, setType type)
 		re4t::cfg->fXinputDeadzone = ini.getFloat("CONTROLLER", "XinputDeadzone", re4t::cfg->fXinputDeadzone);
 		re4t::cfg->fXinputDeadzone = fmin(fmax(re4t::cfg->fXinputDeadzone, 0.0f), 3.5f); // limit between 0.0 - 3.5
 		re4t::cfg->bSmoothAnalogTurning = ini.getBool("CONTROLLER", "SmoothAnalogTurning", re4t::cfg->bSmoothAnalogTurning);
+		re4t::cfg->bCameraRelativeMovement = ini.getBool("CONTROLLER", "CameraRelativeMovement", re4t::cfg->bCameraRelativeMovement);
+
+		std::string CameraRelativeModeStr = ini.getString("CONTROLLER", "CameraRelativeMode", "");
+		if (!CameraRelativeModeStr.empty())
+		{
+			if (CameraRelativeModeStr == std::string("Chase"))
+				re4t::cfg->iCameraRelativeMode = CameraRelativeModes::CamRel_Chase;
+			else if (CameraRelativeModeStr == std::string("Detached"))
+				re4t::cfg->iCameraRelativeMode = CameraRelativeModes::CamRel_Detached;
+		}
+
+		re4t::cfg->fCameraRelativeTurnGain = ini.getFloat("CONTROLLER", "CameraRelativeTurnGain", re4t::cfg->fCameraRelativeTurnGain);
+		re4t::cfg->fCameraRelativeTurnGain = fmin(fmax(re4t::cfg->fCameraRelativeTurnGain, 0.06f), 0.16f); // limit between 0.06 - 0.16
+		re4t::cfg->fCameraRelativeMaxTurnRate = ini.getFloat("CONTROLLER", "CameraRelativeMaxTurnRate", re4t::cfg->fCameraRelativeMaxTurnRate);
+		re4t::cfg->fCameraRelativeMaxTurnRate = fmin(fmax(re4t::cfg->fCameraRelativeMaxTurnRate, 0.14f), 0.28f); // limit between 0.14 - 0.28
+		re4t::cfg->fCameraRelativeOrbitSpeed = ini.getFloat("CONTROLLER", "CameraRelativeOrbitSpeed", re4t::cfg->fCameraRelativeOrbitSpeed);
+		re4t::cfg->fCameraRelativeOrbitSpeed = fmin(fmax(re4t::cfg->fCameraRelativeOrbitSpeed, 0.045f), 0.10f); // limit between 0.045 - 0.10
+		re4t::cfg->fCameraRelativeDriftLeft = ini.getFloat("CONTROLLER", "CameraRelativeDriftLeft", re4t::cfg->fCameraRelativeDriftLeft);
+		re4t::cfg->fCameraRelativeDriftLeft = fmin(fmax(re4t::cfg->fCameraRelativeDriftLeft, 0.0f), 0.20f); // limit between 0 - 0.20
+		re4t::cfg->fCameraRelativeDriftRight = ini.getFloat("CONTROLLER", "CameraRelativeDriftRight", re4t::cfg->fCameraRelativeDriftRight);
+		re4t::cfg->fCameraRelativeDriftRight = fmin(fmax(re4t::cfg->fCameraRelativeDriftRight, 0.0f), 0.20f); // limit between 0 - 0.20
 		re4t::cfg->bAllowReloadWithoutAiming_controller = ini.getBool("CONTROLLER", "AllowReloadWithoutAiming", re4t::cfg->bAllowReloadWithoutAiming_controller);
 		re4t::cfg->bReloadWithoutZoom_controller = ini.getBool("CONTROLLER", "ReloadWithoutZoom", re4t::cfg->bReloadWithoutZoom_controller);
 
@@ -679,6 +700,18 @@ void re4t_cfg::WriteSettings(bool trainerOnly)
 		ini.setBool("CONTROLLER", "OverrideXinputDeadzone", re4t::cfg->bOverrideXinputDeadzone);
 		ini.setFloat("CONTROLLER", "XinputDeadzone", re4t::cfg->fXinputDeadzone);
 		ini.setBool("CONTROLLER", "SmoothAnalogTurning", re4t::cfg->bSmoothAnalogTurning);
+		ini.setBool("CONTROLLER", "CameraRelativeMovement", re4t::cfg->bCameraRelativeMovement);
+
+		if (re4t::cfg->iCameraRelativeMode == CameraRelativeModes::CamRel_Detached)
+			ini.setString("CONTROLLER", "CameraRelativeMode", "Detached");
+		else
+			ini.setString("CONTROLLER", "CameraRelativeMode", "Chase");
+
+		ini.setFloat("CONTROLLER", "CameraRelativeTurnGain", re4t::cfg->fCameraRelativeTurnGain);
+		ini.setFloat("CONTROLLER", "CameraRelativeMaxTurnRate", re4t::cfg->fCameraRelativeMaxTurnRate);
+		ini.setFloat("CONTROLLER", "CameraRelativeOrbitSpeed", re4t::cfg->fCameraRelativeOrbitSpeed);
+		ini.setFloat("CONTROLLER", "CameraRelativeDriftLeft", re4t::cfg->fCameraRelativeDriftLeft);
+		ini.setFloat("CONTROLLER", "CameraRelativeDriftRight", re4t::cfg->fCameraRelativeDriftRight);
 		ini.setBool("CONTROLLER", "AllowReloadWithoutAiming", re4t::cfg->bAllowReloadWithoutAiming_controller);
 		ini.setBool("CONTROLLER", "ReloadWithoutZoom", re4t::cfg->bReloadWithoutZoom_controller);
 
@@ -1031,6 +1064,18 @@ void re4t_cfg::LogSettings()
 	spd::log()->info("| {:<30} | {:>15} |", "OverrideXinputDeadzone", re4t::cfg->bOverrideXinputDeadzone ? "true" : "false");
 	spd::log()->info("| {:<30} | {:>15} |", "XinputDeadzone", re4t::cfg->fXinputDeadzone);
 	spd::log()->info("| {:<30} | {:>15} |", "SmoothAnalogTurning", re4t::cfg->bSmoothAnalogTurning ? "true" : "false");
+	spd::log()->info("| {:<30} | {:>15} |", "CameraRelativeMovement", re4t::cfg->bCameraRelativeMovement ? "true" : "false");
+
+	if (re4t::cfg->iCameraRelativeMode == CameraRelativeModes::CamRel_Detached)
+		spd::log()->info("| {:<30} | {:>15} |", "CameraRelativeMode", "Detached");
+	else
+		spd::log()->info("| {:<30} | {:>15} |", "CameraRelativeMode", "Chase");
+
+	spd::log()->info("| {:<30} | {:>15} |", "CameraRelativeTurnGain", re4t::cfg->fCameraRelativeTurnGain);
+	spd::log()->info("| {:<30} | {:>15} |", "CameraRelativeMaxTurnRate", re4t::cfg->fCameraRelativeMaxTurnRate);
+	spd::log()->info("| {:<30} | {:>15} |", "CameraRelativeOrbitSpeed", re4t::cfg->fCameraRelativeOrbitSpeed);
+	spd::log()->info("| {:<30} | {:>15} |", "CameraRelativeDriftLeft", re4t::cfg->fCameraRelativeDriftLeft);
+	spd::log()->info("| {:<30} | {:>15} |", "CameraRelativeDriftRight", re4t::cfg->fCameraRelativeDriftRight);
 	spd::log()->info("| {:<30} | {:>15} |", "AllowReloadWithoutAiming", re4t::cfg->bAllowReloadWithoutAiming_controller ? "true" : "false");
 	spd::log()->info("| {:<30} | {:>15} |", "ReloadWithoutZoom", re4t::cfg->bReloadWithoutZoom_controller ? "true" : "false");
 	spd::log()->info("+--------------------------------+-----------------+");

@@ -18,6 +18,9 @@ float* fAnalogRY;
 
 int RawAnalogLX;
 
+// CameraRelativeMovement.cpp
+void CameraRelativeMovement_ProcessStick(uintptr_t pad);
+
 void re4t::init::ControllerTweaks()
 {
 	// Aiming speed
@@ -70,6 +73,10 @@ void re4t::init::ControllerTweaks()
 		{
 			void operator()(injector::reg_pack& regs)
 			{
+				// May rewrite the left stick before the game reads it. Captured after, so SmoothAnalogTurning sees the same values as the game.
+				if (re4t::cfg->bCameraRelativeMovement)
+					CameraRelativeMovement_ProcessStick(regs.esi);
+
 				RawAnalogLX = *(int16_t*)(regs.esi - 0x44);
 				//RawAnalogLY = *(int16_t*)(regs.esi - 0x42);
 				//RawAnalogRX = *(int16_t*)(regs.esi - 0x40);
