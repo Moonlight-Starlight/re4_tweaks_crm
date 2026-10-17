@@ -18,4 +18,4 @@ using namespace Memory::VP;
 
 extern bool TweaksDevMode; // CommandLine.cpp, enabled in DEBUG build & with -dev command-line param
 
-#define VERBOSE
+//#define VERBOSE
