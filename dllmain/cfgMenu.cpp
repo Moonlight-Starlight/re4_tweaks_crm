@@ -1267,7 +1267,7 @@ void cfgMenuRender()
 						ImGui::PopItemWidth();
 						if (ImGui::IsItemEdited())
 							re4t::cfg->HasUnsavedChanges = true;
-						ImGui::TextWrapped("Limit on the turning speed. (Default: 0.20)");
+						ImGui::TextWrapped("Limits how fast the character can turn. (Default: 0.20)");
 
 						ImGui::Dummy(ImVec2(10, 10 * esHook._cur_monitor_dpi));
 
@@ -1296,6 +1296,15 @@ void cfgMenuRender()
 						if (ImGui::IsItemEdited())
 							re4t::cfg->HasUnsavedChanges = true;
 						ImGui::TextWrapped("Detached camera only. How fast the right stick turns the camera. (Default: 0.070)");
+
+						ImGui::Dummy(ImVec2(10, 10 * esHook._cur_monitor_dpi));
+
+						ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Run radius").x - 60);
+						ImGui::SliderFloat("Run radius", &re4t::cfg->fCameraRelativeRunRadius, 0.60f, 1.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+						ImGui::PopItemWidth();
+						if (ImGui::IsItemEdited())
+							re4t::cfg->HasUnsavedChanges = true;
+						ImGui::TextWrapped("Detached camera only. How far the left stick must be pushed for the character to run. 1.00 turns it off. (Default: 0.90)");
 						ImGui::EndDisabled();
 
 						ImGui::EndDisabled();

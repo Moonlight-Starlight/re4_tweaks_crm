@@ -249,6 +249,8 @@ void ReadSettingsIni(std::wstring ini_path, setType type)
 		re4t::cfg->fCameraRelativeMaxTurnRate = fmin(fmax(re4t::cfg->fCameraRelativeMaxTurnRate, 0.14f), 0.28f); // limit between 0.14 - 0.28
 		re4t::cfg->fCameraRelativeOrbitSpeed = ini.getFloat("CONTROLLER", "CameraRelativeOrbitSpeed", re4t::cfg->fCameraRelativeOrbitSpeed);
 		re4t::cfg->fCameraRelativeOrbitSpeed = fmin(fmax(re4t::cfg->fCameraRelativeOrbitSpeed, 0.045f), 0.10f); // limit between 0.045 - 0.10
+		re4t::cfg->fCameraRelativeRunRadius = ini.getFloat("CONTROLLER", "CameraRelativeRunRadius", re4t::cfg->fCameraRelativeRunRadius);
+		re4t::cfg->fCameraRelativeRunRadius = fmin(fmax(re4t::cfg->fCameraRelativeRunRadius, 0.60f), 1.0f); // limit between 0.60 - 1
 		re4t::cfg->fCameraRelativeDriftLeft = ini.getFloat("CONTROLLER", "CameraRelativeDriftLeft", re4t::cfg->fCameraRelativeDriftLeft);
 		re4t::cfg->fCameraRelativeDriftLeft = fmin(fmax(re4t::cfg->fCameraRelativeDriftLeft, 0.0f), 0.20f); // limit between 0 - 0.20
 		re4t::cfg->fCameraRelativeDriftRight = ini.getFloat("CONTROLLER", "CameraRelativeDriftRight", re4t::cfg->fCameraRelativeDriftRight);
@@ -710,6 +712,7 @@ void re4t_cfg::WriteSettings(bool trainerOnly)
 		ini.setFloat("CONTROLLER", "CameraRelativeTurnGain", re4t::cfg->fCameraRelativeTurnGain);
 		ini.setFloat("CONTROLLER", "CameraRelativeMaxTurnRate", re4t::cfg->fCameraRelativeMaxTurnRate);
 		ini.setFloat("CONTROLLER", "CameraRelativeOrbitSpeed", re4t::cfg->fCameraRelativeOrbitSpeed);
+		ini.setFloat("CONTROLLER", "CameraRelativeRunRadius", re4t::cfg->fCameraRelativeRunRadius);
 		ini.setFloat("CONTROLLER", "CameraRelativeDriftLeft", re4t::cfg->fCameraRelativeDriftLeft);
 		ini.setFloat("CONTROLLER", "CameraRelativeDriftRight", re4t::cfg->fCameraRelativeDriftRight);
 		ini.setBool("CONTROLLER", "AllowReloadWithoutAiming", re4t::cfg->bAllowReloadWithoutAiming_controller);
@@ -1074,6 +1077,7 @@ void re4t_cfg::LogSettings()
 	spd::log()->info("| {:<30} | {:>15} |", "CameraRelativeTurnGain", re4t::cfg->fCameraRelativeTurnGain);
 	spd::log()->info("| {:<30} | {:>15} |", "CameraRelativeMaxTurnRate", re4t::cfg->fCameraRelativeMaxTurnRate);
 	spd::log()->info("| {:<30} | {:>15} |", "CameraRelativeOrbitSpeed", re4t::cfg->fCameraRelativeOrbitSpeed);
+	spd::log()->info("| {:<30} | {:>15} |", "CameraRelativeRunRadius", re4t::cfg->fCameraRelativeRunRadius);
 	spd::log()->info("| {:<30} | {:>15} |", "CameraRelativeDriftLeft", re4t::cfg->fCameraRelativeDriftLeft);
 	spd::log()->info("| {:<30} | {:>15} |", "CameraRelativeDriftRight", re4t::cfg->fCameraRelativeDriftRight);
 	spd::log()->info("| {:<30} | {:>15} |", "AllowReloadWithoutAiming", re4t::cfg->bAllowReloadWithoutAiming_controller ? "true" : "false");

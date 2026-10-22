@@ -1,8 +1,8 @@
 #pragma once
 // Maths for CameraRelativeMovement. No game or Windows dependencies, so it can be tested on its own.
 //
-// Conventions: yaw in radians, and pushing the stick right DECREASES the player's ang_A0.y.
-// Stick x is positive right, y positive up, both in [-1, 1]. dt is the game's deltaTime_70 (1.0 = one 30 FPS frame).
+// Conventions: yaw in radians, and pushing the left stick right DECREASES the player's ang_A0.y.
+// Left stick x is positive right, y positive up, both in [-1, 1]. dt is the game's deltaTime_70 (1.0 = one 30 FPS frame).
 
 #include <algorithm>
 #include <cmath>
@@ -14,15 +14,15 @@ namespace camrel
 
 	struct Config
 	{
-		float deadzone = 0.25f;        // stick magnitude below which the stick counts as neutral
+		float deadzone = 0.25f;        // left stick magnitude below which it counts as neutral
 		float turnGain = 0.10f;        // fraction of the remaining heading error closed per 30 FPS frame
 		float maxTurnRate = 0.20f;     // radians turned per 30 FPS frame, at most
 		float facingThreshold = 1.22f; // only walk once within this many radians of the target heading
 		float shoulderOffset = kShoulderOffset;
-		float driftLeft = 0.0f;        // sideways stick deflection ignored to the left / right (stick drift)
+		float driftLeft = 0.0f;        // sideways left stick deflection ignored to the left / right (stick drift)
 		float driftRight = 0.0f;
-		bool backpedal = true;         // Chase: the rear of the stick walks backwards. Detached: all directions walk forward.
-		float rearEnter = 2.0f;        // stick angle from straight up where the rear zone starts (~115 deg)...
+		bool backpedal = true;         // Chase: the rear of the left stick walks backwards. Detached: all directions walk forward.
+		float rearEnter = 2.0f;        // left stick angle from straight up where the rear zone starts (~115 deg)...
 		float rearExit = 1.8f;         // ...and ends (~103 deg)
 	};
 
@@ -33,10 +33,10 @@ namespace camrel
 
 	struct Output
 	{
-		bool active = false;    // false: stick is neutral
+		bool active = false;    // false: left stick is neutral
 		float newYaw = 0.0f;    // player yaw to write back
-		bool forward = false;   // report "stick forward" to the game
-		bool backward = false;  // report "stick back" to the game
+		bool forward = false;   // report "left stick forward" to the game
+		bool backward = false;  // report "left stick back" to the game
 	};
 
 	inline float WrapAngle(float a)
@@ -57,7 +57,7 @@ namespace camrel
 		return c;
 	}
 
-	// Removes the first `drift` of the stick's sideways deflection and rescales the rest to the full range.
+	// Removes the first `drift` of the left stick's sideways deflection and rescales the rest to the full range.
 	inline float RemoveDrift(float x, float driftLeft, float driftRight)
 	{
 		float drift = x < 0.0f ? driftLeft : driftRight;
@@ -96,7 +96,7 @@ namespace camrel
 
 		if (s.inRear)
 		{
-			// Backpedal: Leon keeps his facing and the sideways part of the stick turns him. This is a turn rate rather than a
+			// Backpedal: Leon keeps his facing and the sideways part of the left stick turns him. This is a turn rate rather than a
 			// heading to reach, so it never fights the game's own quick turn (back + run).
 			float side = std::atan2(x, -stickY); // positive = right
 			float step = std::max(-maxStep, std::min(maxStep, -side * k));
@@ -105,7 +105,7 @@ namespace camrel
 			return out;
 		}
 
-		// Steer toward the stick direction relative to the live camera (minus the shoulder offset, so a settled chase camera
+		// Steer toward the left stick direction relative to the live camera (minus the shoulder offset, so a settled chase camera
 		// gives exactly Leon's facing).
 		float target = WrapAngle(cameraYaw - cfg.shoulderOffset - stickAngle);
 		float err = WrapAngle(target - playerYaw);
@@ -133,7 +133,7 @@ namespace camrel
 	}
 
 	// The unit that puts the camera at cameraTarget: camera yaw = base yaw + shoulder offset + offset. Never exactly 0, which the game
-	// treats as "stick idle" and only decays the old offset.
+	// treats as "right stick idle" and only decays the old offset.
 	inline float PinnedCameraOffsetUnit(float cameraTarget, float baseYaw)
 	{
 		float u = -WrapAngle(cameraTarget - (baseYaw + kShoulderOffset)) / kRatioPerUnit;
@@ -149,5 +149,19 @@ namespace camrel
 			return 0.0f;
 		float v = std::min((a - deadzone) / (1.0f - deadzone), 1.0f);
 		return (rx > 0.0f ? -1.0f : 1.0f) * v * v * speed * dt;
+	}
+
+	// ---- Detached run ----
+
+	// Run when the left stick is pushed past runRadius, and keep running until it drops 0.10 below that, so it doesn't flicker at the
+	// edge. A radius of 1.0 turns it off (the left stick only reaches 1.0 at the very rim, and not on every pad).
+	inline bool RunByTilt(bool wasRunning, float stickX, float stickY, float runRadius, float deadzone = 0.25f)
+	{
+		if (runRadius >= 0.995f)
+			return false;
+
+		float tilt = std::sqrt(stickX * stickX + stickY * stickY);
+		float exitRadius = std::max(deadzone + 0.05f, runRadius - 0.10f);
+		return wasRunning ? tilt > exitRadius : tilt >= runRadius;
 	}
 }

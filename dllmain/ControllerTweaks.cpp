@@ -20,6 +20,7 @@ int RawAnalogLX;
 
 // CameraRelativeMovement.cpp
 void CameraRelativeMovement_ProcessStick(uintptr_t pad);
+void CameraRelativeMovement_PressRun(uint32_t* const (&keyWords)[4]);
 
 void re4t::init::ControllerTweaks()
 {
@@ -263,5 +264,26 @@ void re4t::init::ControllerTweaks()
 					regs.ef &= ~(1 << regs.zero_flag);
 			}
 		}; injector::MakeInline<joyFireOn_TypeIIIFix>(pattern.count(1).get(0).get<uint32_t>(0), pattern.count(1).get(0).get<uint32_t>(9));
+	}
+
+	// CameraRelativeMovement: press KEY_RUN in the game's own key state, so run follows the player's layout.
+	// Hooked in PadRead right after it ORs its analog camera keys into the four key words, which that code also gives us.
+	{
+		auto pattern = hook::pattern("B8 00 00 00 01 09 05 ? ? ? ? 09 05 ? ? ? ? 09 05 ? ? ? ? 09 05 ? ? ? ?");
+		static uint32_t* keyWords[4];
+		for (int i = 0; i < 4; i++)
+			keyWords[i] = *pattern.count(1).get(0).get<uint32_t*>(7 + 6 * i);
+
+		pattern = hook::pattern("A1 ? ? ? ? B9 00 00 00 80 85 88 70 01 00 00");
+		static uint32_t* ptrGlobalStruct = *pattern.count(1).get(0).get<uint32_t*>(1);
+		struct PadReadKeyState
+		{
+			void operator()(injector::reg_pack& regs)
+			{
+				CameraRelativeMovement_PressRun(keyWords);
+				// Code we overwrote
+				regs.eax = *ptrGlobalStruct;
+			}
+		}; injector::MakeInline<PadReadKeyState>(pattern.count(1).get(0).get<uint32_t>(0), pattern.count(1).get(0).get<uint32_t>(5));
 	}
 }

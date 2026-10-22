@@ -23,7 +23,7 @@ int8_t* AnalogRX_8;
 int8_t* AnalogRY_9;
 
 // CameraRelativeMovement.cpp
-bool CameraRelativeMovement_GetPinnedCameraOffset(float* outUnit);
+bool CameraRelativeMovement_GetPinnedCameraOffset(float* outUnit, uintptr_t calcEbp);
 
 uintptr_t* knife_r3_set40_jmpAddr;
 
@@ -221,7 +221,7 @@ void re4t::init::CameraTweaks()
 		{
 			float pinnedUnit;
 
-			if (CameraRelativeMovement_GetPinnedCameraOffset(&pinnedUnit))
+			if (CameraRelativeMovement_GetPinnedCameraOffset(&pinnedUnit, regs.ebp))
 			{
 				// CameraRelativeMovement, Detached mode: hold the camera at a fixed world yaw (same float path as KB/M)
 				*C_RANGE_1097 = 42.3f;

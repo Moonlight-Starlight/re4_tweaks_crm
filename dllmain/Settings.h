@@ -112,6 +112,7 @@ public:
 	float fCameraRelativeTurnGain = 0.10f;
 	float fCameraRelativeMaxTurnRate = 0.20f;
 	float fCameraRelativeOrbitSpeed = 0.07f;
+	float fCameraRelativeRunRadius = 0.90f;
 	float fCameraRelativeDriftLeft = 0.08f;
 	float fCameraRelativeDriftRight = 0.08f;
 
