@@ -22,6 +22,9 @@ float* fMousePosY;
 int8_t* AnalogRX_8;
 int8_t* AnalogRY_9;
 
+// CameraRelativeMovement.cpp
+bool CameraRelativeMovement_GetPinnedCameraOffset(float* outUnit);
+
 uintptr_t* knife_r3_set40_jmpAddr;
 
 double CameraControl__getCameraPitch_hook()
@@ -216,7 +219,15 @@ void re4t::init::CameraTweaks()
 	{
 		void operator()(injector::reg_pack& regs)
 		{
-			if (re4t::cfg->bCameraImprovements && isKeyboardMouse())
+			float pinnedUnit;
+
+			if (CameraRelativeMovement_GetPinnedCameraOffset(&pinnedUnit))
+			{
+				// CameraRelativeMovement, Detached mode: hold the camera at a fixed world yaw (same float path as KB/M)
+				*C_RANGE_1097 = 42.3f;
+				*(float*)(regs.ebp - 0x8) = pinnedUnit * 127.0f;
+			}
+			else if (re4t::cfg->bCameraImprovements && isKeyboardMouse())
 			{
 				// Invert the X float if it reaches its limit.
 				// Makes it so we can fully rotate the camera.

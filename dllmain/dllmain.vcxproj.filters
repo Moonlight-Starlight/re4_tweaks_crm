@@ -85,6 +85,9 @@
     <ClCompile Include="ControllerTweaks.cpp">
       <Filter>dllmain</Filter>
     </ClCompile>
+    <ClCompile Include="CameraRelativeMovement.cpp">
+      <Filter>dllmain</Filter>
+    </ClCompile>
     <ClCompile Include="input.cpp">
       <Filter>dllmain</Filter>
     </ClCompile>
@@ -214,6 +217,9 @@
       <Filter>external\ModUtils</Filter>
     </ClInclude>
     <ClInclude Include="GameFlags.h">
+      <Filter>dllmain</Filter>
+    </ClInclude>
+    <ClInclude Include="CameraRelativeMovement.h">
       <Filter>dllmain</Filter>
     </ClInclude>
     <ClInclude Include="Settings.h">
