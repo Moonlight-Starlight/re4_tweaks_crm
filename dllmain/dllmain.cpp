@@ -38,7 +38,7 @@ void Init_Main()
 	std::string commit = GIT_CUR_COMMIT;
 	commit.resize(8);
 
-	spd::log()->info("Starting re4_tweaks v{0}-{1}-{2}", APP_VERSION, commit, GIT_BRANCH);
+	spd::log()->info("Starting re4_tweaks v{0}-{1}-{2} + CameraRelativeMovement v{3}", APP_VERSION, commit, GIT_BRANCH, CRM_VERSION);
 	spd::LogProcessNameAndPID();
 	spd::log()->info("Running from: \"{}\"", WstrToStr(rootPath));
 	spd::log()->info("Game version: {}", GameVersion());

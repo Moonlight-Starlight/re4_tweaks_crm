@@ -13,6 +13,9 @@
 #define APP_ORIGINALVERSION		"dinput8.dll"
 #define APP_INTERNALNAME		"re4_tweaks"
 
+// CameraRelativeMovement version, shown next to APP_VERSION. APP_VERSION itself stays the original re4_tweaks one (the update check uses it).
+#define CRM_VERSION				"0.7b"
+
 // Get APP_VERSION
 #define _TO_STRING_(x) #x
 #define _TO_STRING(x) _TO_STRING_(x)

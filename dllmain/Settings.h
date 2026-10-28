@@ -113,8 +113,8 @@ public:
 	float fCameraRelativeMaxTurnRate = 0.20f;
 	float fCameraRelativeOrbitSpeed = 0.07f;
 	float fCameraRelativeRunRadius = 0.90f;
-	float fCameraRelativeDriftLeft = 0.08f;
-	float fCameraRelativeDriftRight = 0.08f;
+	float fCameraRelativeDriftLeft = 0.0f;
+	float fCameraRelativeDriftRight = 0.0f;
 
 	// FRAME RATE
 	bool bMotionFixes = true;
@@ -147,7 +147,7 @@ public:
 
 	// MISC
 	std::string sWrappedDllPath = "";
-	bool bNeverCheckForUpdates = false;
+	bool bNeverCheckForUpdates = true;
 	bool bRestoreDemoVideos = true;
 	bool bRestoreAnalogTitleScroll = true;
 	int iViolenceLevelOverride = -1;

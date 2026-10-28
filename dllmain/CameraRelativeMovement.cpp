@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <cmath>
+#include <cstring>
 #include "dllmain.h"
 #include "Settings.h"
 #include "Patches.h"
@@ -37,6 +38,8 @@ static std::chrono::steady_clock::time_point g_pinStamp;
 static bool g_running = false; // Detached: the left stick is past the run radius
 static std::chrono::steady_clock::time_point g_runStamp;
 static std::chrono::steady_clock::time_point g_lastAim;
+static float g_swingEst = 0.0f; // Chase: how far the right stick has swung the live camera yaw, estimated (see UpdateSwing)
+static const float kSwingKeep = 0.85f; // per 30 FPS frame: how much of the old swing the game's camera filter keeps. A guess, to be tuned from the log
 
 // Camera yaw minus base matrix yaw while the base is rotated to hold the pin. Measured at 0.178 in game and constant: the shoulder
 // offset plus the tiny right stick value sent below. It has to stay a constant: the pad (ProcessStick) and the camera run on
@@ -66,10 +69,26 @@ static const char* GateReason()
 	if (player->stat_468 & 2)
 		return "player event";
 
-	// Pushing a statue, crate, ...: Leon stays locked to the object and the game ignores the left stick, so leave it alone.
-	// The push is action state 9 (r_no_1_FD), from its first frame until it ends, including when the object is stuck.
-	if (player->r_no_0_FC == 0 && player->r_no_1_FD == 9)
-		return "pushing object";
+	// Only plain movement. r_no_0_FC is 0 for it (damage, death, scenes and events are other values), and r_no_1_FD indexes the game's
+	// Pl_func_move_tbl. The states below ignore the left stick (ledge drops, climbing, ladders, pushing a statue or crate, ...), so turning
+	// Leon in them would spin him through the animation. A push lasts from its first frame until it ends, even when the object is stuck.
+	if (player->r_no_0_FC != 0)
+		return "player busy";
+
+	switch (player->r_no_1_FD)
+	{
+		case 7:  return "climbing up";
+		case 8:  return "climbing down";
+		case 9:  return "pushing object";
+		case 10: return "context action";
+		case 12: return "fence";
+		case 14: return "falling";
+		case 15: return "boat";
+		case 16: return "ladder";
+		case 17: return "crouch";
+		case 19: return "jumping down";
+		case 20: return "whistle";
+	}
 
 	if (OptionOpenFlag())
 		return "options menu";
@@ -94,6 +113,21 @@ static bool IsChaseCamera()
 	return CamCtrl != nullptr && CamCtrl->r0_34 == 0xA; // CameraControl::Move case 0xA -> CameraQuasiFPS::move
 }
 
+// The right stick swings the chase camera aside (the game's own look-around). CameraQuasiFPS::calcDepressionRatio sets m_direction_ratio_208 to
+// that yaw offset in radians (it decays by 0.9 per frame once the stick is released), and CameraQuasiFPS::move then low-pass filters the camera's
+// sideways position. Follow it with the same kind of filter, to know how much of the live camera yaw is the swing.
+static void UpdateSwing(float dt)
+{
+	if (CamCtrl == nullptr)
+	{
+		g_swingEst = 0.0f;
+		return;
+	}
+
+	float keep = powf(kSwingKeep, dt);
+	g_swingEst = keep * g_swingEst + (1.0f - keep) * CamCtrl->m_QuasiFPS_278.m_direction_ratio_208;
+}
+
 void CameraRelativeMovement_ProcessStick(uintptr_t pad)
 {
 	int16_t* rawLX = (int16_t*)(pad - 0x44);
@@ -103,6 +137,8 @@ void CameraRelativeMovement_ProcessStick(uintptr_t pad)
 
 	const char* reason = GateReason();
 
+	UpdateSwing(GlobalPtr() ? GlobalPtr()->deltaTime_70 : 1.0f);
+
 #ifdef CAMERARELATIVEMOVEMENT_DEBUG
 	{
 		static const char* lastReason = reinterpret_cast<const char*>(1); // never a real value, forces the first log
@@ -110,6 +146,22 @@ void CameraRelativeMovement_ProcessStick(uintptr_t pad)
 		{
 			spd::log()->info("{} -> {}{}", __FUNCTION__, reason ? "inactive: " : "ACTIVE", reason ? reason : "");
 			lastReason = reason;
+		}
+	}
+#endif
+
+#ifdef CAMERARELATIVEMOVEMENT_DEBUG
+	{
+		// Anything that decides whether the game's own controls are in charge, logged when it changes
+		static uint32_t last[7] = {};
+		cPlayer* p = PlayerPtr();
+		uint32_t now[7] = { CamCtrl ? CamCtrl->r0_34 : 0xFFFFu, p ? p->r_no_0_FC : 0xFFFFu, p ? p->r_no_1_FD : 0xFFFFu, p ? p->r_no_2_FE : 0xFFFFu,
+			p ? p->stat_468 : 0u, GlobalPtr() ? GlobalPtr()->flags_STATUS_0_501C[0] : 0u, (uint32_t)(Key_btn_on() & ((uint64_t)KEY_BTN::KEY_KAMAE | (uint64_t)KEY_BTN::KEY_KAMAE_KNIFE)) };
+		if (memcmp(last, now, sizeof(last)) != 0)
+		{
+			spd::log()->info("{} -> STATE camera {:#x}, player {}/{}/{}, stat_468 {:#x}, flags {:#x}, aim keys {:#x}, plYaw {:.3f}, {}", __FUNCTION__,
+				now[0], now[1], now[2], now[3], now[4], now[5], now[6], p ? p->ang_A0.y : 0.0f, reason ? reason : "ACTIVE");
+			memcpy(last, now, sizeof(last));
 		}
 	}
 #endif
@@ -173,6 +225,30 @@ void CameraRelativeMovement_ProcessStick(uintptr_t pad)
 		return;
 	}
 
+	// Fixed and event cameras (a scripted chase, ...): the game's own controls, same as the states above
+	if (!IsChaseCamera())
+	{
+		g_state = camrel::State();
+		g_running = false;
+		return;
+	}
+
+	// Chase: Leon must not follow the right stick's camera swing, so steer against the live camera minus the estimated swing. That leaves the
+	// camera's own lag behind Leon alone.
+	float steerYaw = detached ? liveCamYaw : camrel::WrapAngle(liveCamYaw - g_swingEst);
+
+#ifdef CAMERARELATIVEMOVEMENT_DEBUG
+	{
+		// To tune kSwingKeep and check the sign: ratio is the game's swing, est ours, measured is the live camera against Leon's facing (it also holds
+		// the camera's lag while he turns, so compare it standing still)
+		static int counter = 0;
+		float ratio = CamCtrl ? CamCtrl->m_QuasiFPS_278.m_direction_ratio_208 : 0.0f;
+		if ((fabsf(ratio) > 0.01f || fabsf(g_swingEst) > 0.01f) && (counter++ % 3) == 0)
+			spd::log()->info("{} -> SWING rx {:.2f} ratio {:.3f} est {:.3f} measured {:.3f} steerYaw {:.3f}", __FUNCTION__, rawRX / 32767.0f, ratio, g_swingEst,
+				camrel::WrapAngle(liveCamYaw - (player->ang_A0.y + camrel::kShoulderOffset)), steerYaw);
+	}
+#endif
+
 	camrel::Config cfg;
 	cfg.turnGain = re4t::cfg->fCameraRelativeTurnGain;
 	cfg.maxTurnRate = re4t::cfg->fCameraRelativeMaxTurnRate;
@@ -182,7 +258,7 @@ void CameraRelativeMovement_ProcessStick(uintptr_t pad)
 	float stickX = *rawLX / 32767.0f;
 	float stickY = *rawLY / 32767.0f;
 	camrel::Output out = detached ? camrel::Update(g_state, stickX, stickY, g_camTarget, player->ang_A0.y, dt, camrel::DetachedConfig(cfg))
-	                              : camrel::Update(g_state, stickX, stickY, liveCamYaw, player->ang_A0.y, dt, cfg);
+	                              : camrel::Update(g_state, stickX, stickY, steerYaw, player->ang_A0.y, dt, cfg);
 
 	// Detached: a full push runs (the run button still works too), only while walking forward
 	[[maybe_unused]] bool wasRunning = g_running;

@@ -1276,7 +1276,7 @@ void cfgMenuRender()
 						ImGui::PopItemWidth();
 						if (ImGui::IsItemEdited())
 							re4t::cfg->HasUnsavedChanges = true;
-						ImGui::TextWrapped("Ignores a small leftward lean of the left stick, to hide stick drift. (Default: 0.08)");
+						ImGui::TextWrapped("Ignores a small leftward lean of the left stick, to hide stick drift. (Default: 0.00)");
 
 						ImGui::Dummy(ImVec2(10, 10 * esHook._cur_monitor_dpi));
 
@@ -1285,7 +1285,7 @@ void cfgMenuRender()
 						ImGui::PopItemWidth();
 						if (ImGui::IsItemEdited())
 							re4t::cfg->HasUnsavedChanges = true;
-						ImGui::TextWrapped("Ignores a small rightward lean of the left stick, to hide stick drift. (Default: 0.08)");
+						ImGui::TextWrapped("Ignores a small rightward lean of the left stick, to hide stick drift. (Default: 0.00)");
 
 						ImGui::BeginDisabled(re4t::cfg->iCameraRelativeMode != CameraRelativeModes::CamRel_Detached);
 						ImGui::Dummy(ImVec2(10, 10 * esHook._cur_monitor_dpi));
