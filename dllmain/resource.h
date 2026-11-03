@@ -14,7 +14,7 @@
 #define APP_INTERNALNAME		"re4_tweaks"
 
 // CameraRelativeMovement version, shown next to APP_VERSION. APP_VERSION itself stays the original re4_tweaks one (the update check uses it).
-#define CRM_VERSION				"0.7b"
+#define CRM_VERSION				"0.8"
 
 // Get APP_VERSION
 #define _TO_STRING_(x) #x

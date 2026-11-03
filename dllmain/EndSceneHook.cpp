@@ -424,7 +424,7 @@ void Init_ImGui(LPDIRECT3DDEVICE9 pDevice)
 	// Update cfgMenu window title
 	cfgMenuTitle.append(" v");
 	cfgMenuTitle.append(APP_VERSION);
-	cfgMenuTitle.append(" + CameraRelativeMovement v");
+	cfgMenuTitle.append(" + CRM ");
 	cfgMenuTitle.append(CRM_VERSION);
 
 	if (TweaksDevMode)

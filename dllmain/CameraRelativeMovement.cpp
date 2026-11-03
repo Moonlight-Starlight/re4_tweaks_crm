@@ -17,7 +17,8 @@
 // to a plain forward / back push (or neutral), so the game never tank-turns him. PadRead is a digital 4-way pad: past ~60% tilt a
 // direction is on and tilt does not change speed, so the synthetic push is always full scale.
 //
-// Chase: the left stick is read relative to the live chase camera. Pushing the left stick down walks backwards.
+// Chase: the left stick is read relative to the live chase camera, minus the swing the right stick puts into it (UpdateSwing), so the
+//        right stick only looks around. Pushing the left stick down walks backwards.
 // Detached: the right stick orbits the camera, which stays put when Leon turns. CameraTweaks.cpp's calcDepressionRatioAnalogRX hook
 //           asks CameraRelativeMovement_GetPinnedCameraOffset to keep the camera at its world yaw. Pushing the left stick past the
 //           run radius also sets the game's KEY_RUN (CameraRelativeMovement_PressRun), whatever button is mapped to run.
@@ -39,7 +40,7 @@ static bool g_running = false; // Detached: the left stick is past the run radiu
 static std::chrono::steady_clock::time_point g_runStamp;
 static std::chrono::steady_clock::time_point g_lastAim;
 static float g_swingEst = 0.0f; // Chase: how far the right stick has swung the live camera yaw, estimated (see UpdateSwing)
-static const float kSwingKeep = 0.85f; // per 30 FPS frame: how much of the old swing the game's camera filter keeps. A guess, to be tuned from the log
+static const float kSwingKeep = 0.85f; // per 30 FPS frame: how much of the old swing the game's camera filter keeps (matched against logs)
 
 // Camera yaw minus base matrix yaw while the base is rotated to hold the pin. Measured at 0.178 in game and constant: the shoulder
 // offset plus the tiny right stick value sent below. It has to stay a constant: the pad (ProcessStick) and the camera run on
@@ -89,6 +90,11 @@ static const char* GateReason()
 		case 19: return "jumping down";
 		case 20: return "whistle";
 	}
+
+	// The game's own input lock (KeyStop): PadRead clears every key while it is set, so Leon is meant to ignore the pad, as during the
+	// merchant's intro. The mod turns him directly, so it has to stay out too.
+	if (FlagIsSet(GlobalPtr()->flags_STOP_0_170, uint32_t(Flags_STOP::SPF_KEY)))
+		return "keys stopped";
 
 	if (OptionOpenFlag())
 		return "options menu";
@@ -153,14 +159,17 @@ void CameraRelativeMovement_ProcessStick(uintptr_t pad)
 #ifdef CAMERARELATIVEMOVEMENT_DEBUG
 	{
 		// Anything that decides whether the game's own controls are in charge, logged when it changes
-		static uint32_t last[7] = {};
+		static uint32_t last[13] = {};
 		cPlayer* p = PlayerPtr();
-		uint32_t now[7] = { CamCtrl ? CamCtrl->r0_34 : 0xFFFFu, p ? p->r_no_0_FC : 0xFFFFu, p ? p->r_no_1_FD : 0xFFFFu, p ? p->r_no_2_FE : 0xFFFFu,
-			p ? p->stat_468 : 0u, GlobalPtr() ? GlobalPtr()->flags_STATUS_0_501C[0] : 0u, (uint32_t)(Key_btn_on() & ((uint64_t)KEY_BTN::KEY_KAMAE | (uint64_t)KEY_BTN::KEY_KAMAE_KNIFE)) };
+		GLOBAL_WK* g = GlobalPtr();
+		uint32_t now[13] = { CamCtrl ? CamCtrl->r0_34 : 0xFFFFu, p ? p->r_no_0_FC : 0xFFFFu, p ? p->r_no_1_FD : 0xFFFFu, p ? p->r_no_2_FE : 0xFFFFu,
+			p ? p->stat_468 : 0u, g ? g->flags_STATUS_0_501C[0] : 0u, (uint32_t)(Key_btn_on() & ((uint64_t)KEY_BTN::KEY_KAMAE | (uint64_t)KEY_BTN::KEY_KAMAE_KNIFE)),
+			g ? g->flags_STATUS_1_5020[0] : 0u, g ? g->flags_STATUS_2_5024[0] : 0u, g ? g->flags_STATUS_3_5028[0] : 0u, p ? p->m_Flag_464 : 0u,
+			(uint32_t)Key_btn_on(), g ? g->flags_STOP_0_170[0] : 0u };
 		if (memcmp(last, now, sizeof(last)) != 0)
 		{
-			spd::log()->info("{} -> STATE camera {:#x}, player {}/{}/{}, stat_468 {:#x}, flags {:#x}, aim keys {:#x}, plYaw {:.3f}, {}", __FUNCTION__,
-				now[0], now[1], now[2], now[3], now[4], now[5], now[6], p ? p->ang_A0.y : 0.0f, reason ? reason : "ACTIVE");
+			spd::log()->info("{} -> STATE camera {:#x}, player {}/{}/{}, stat_468 {:#x}, flags {:#x}, aim keys {:#x}, plYaw {:.3f}, {} | flags1 {:#x} flags2 {:#x} flags3 {:#x} m_Flag_464 {:#x} keys {:#x} stop {:#x}", __FUNCTION__,
+				now[0], now[1], now[2], now[3], now[4], now[5], now[6], p ? p->ang_A0.y : 0.0f, reason ? reason : "ACTIVE", now[7], now[8], now[9], now[10], now[11], now[12]);
 			memcpy(last, now, sizeof(last));
 		}
 	}
